@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -50,32 +51,153 @@
         .hidden {
             display: none;
         }
-        /* Full-screen video styling */
-        .fullscreen-video-container {
-            position: absolute;
-            top: 0;
-            left: 0;
+        
+        /* Gift Selection Page Styles */
+        #gift-page {
+            --primary-color: #FE2C55;
+            --background-light: #ffffff;
+            --item-bg-light: #f1f1f2;
+            --text-dark: #111111;
+            --text-light: #8a8a8a;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+        }
+        .gift-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 1rem;
+        }
+        .gift-item {
+            background-color: var(--item-bg-light);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+        }
+        .gift-item img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            margin-bottom: 0.5rem;
+        }
+        .gift-item .gift-name {
+            font-size: 0.8rem;
+            font-weight: 500;
+            height: 2.5rem; /* Ensure consistent height */
+            color: var(--text-dark);
+        }
+        .add-btn, .quantity-selector {
+            margin-top: 0.5rem;
             width: 100%;
-            height: 100%;
-            overflow: hidden;
+        }
+        .add-btn {
+            background-color: #e8e8e9;
+            color: var(--text-dark);
+            border: none;
+            padding: 0.3rem 0;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+        .quantity-btn {
+            background-color: #e8e8e9;
+            color: var(--text-dark);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: black; /* Fallback for transparency */
+            cursor: pointer;
+            border: none;
         }
-        .fullscreen-video-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* This makes the video cover the entire container */
+        .quantity-display {
+            font-weight: bold;
         }
-        /* Animation styles */
-        #overlay-content {
-            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s ease-in-out;
-            transform-origin: top left;
+        .gift-footer {
+            background-color: var(--background-light);
+            border-top: 1px solid #e8e8e9;
         }
-        .fly-away {
-            transform: translate(-100%, -100%) scale(0.1);
+        .get-btn {
+            background-color: var(--primary-color);
+        }
+        
+        /* Modal and Toast Styles */
+        .modal-container {
+             position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #success-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
             opacity: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            background-color: rgba(0,0,0,0.75);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 9999px;
+            gap: 0.75rem;
+            transform: translate(-50%, -40%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #success-toast.visible {
+            opacity: 1;
+            pointer-events: all;
+            transform: translate(-50%, -50%);
+        }
+        .checkmark {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background-color: #25d366;
+        }
+        .checkmark::after {
+            content: '';
+            width: 6px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 3px 3px 0;
+            transform: rotate(45deg);
+            margin-bottom: 3px; /* Nudge checkmark up for better centering */
+        }
+        
+        /* Animation Styles */
+        .flying-gift {
+            position: fixed;
+            z-index: 1001;
+            transition: transform 0.6s cubic-bezier(0.5, -0.5, 1, 1), opacity 0.6s ease-out;
+            pointer-events: none;
+        }
+        .flying-gift-out {
+            position: fixed;
+            z-index: 1001;
+            width: 35px;
+            height: 35px;
+            transition: transform 1s cubic-bezier(0.17, 0.67, 0.83, 0.67), opacity 1s ease-out;
+            pointer-events: none;
+        }
+        @keyframes pulse-box {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        .box-pulse {
+            animation: pulse-box 0.4s ease-in-out;
         }
     </style>
 </head>
@@ -193,25 +315,34 @@
         </div>
 
         <!-- Gift Page --><div id="gift-page" class="hidden absolute top-0 left-0 w-full h-full bg-white flex flex-col">
-             <!-- Gift Page Header --><header class="flex items-center p-4 border-b border-gray-200 absolute top-0 left-0 w-full bg-white bg-opacity-75 z-20">
-                <button id="back-button" class="cursor-pointer">
+            <header class="flex items-center justify-between p-4 absolute top-0 left-0 w-full z-20 border-b border-gray-200">
+                <button id="back-button" class="cursor-pointer text-black">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
-                <h1 class="text-xl font-bold mx-auto">Your Gift</h1>
+                <h1 class="text-xl font-bold">Take gifts</h1>
+                <div class="w-6 h-6"></div> <!-- Spacer for centering -->
             </header>
-             <!-- Gift Page Content --><main class="flex-grow flex flex-col items-center justify-center p-0 bg-black relative">
-                <div class="fullscreen-video-container">
-                    <video src="https://v16-vod.capcutvod.com/5f85998cb0063b5b70ff4eadc6ffa2d9/68fcbd28/video/tos/alisg/tos-alisg-ve-8fe9aq-sg/oAeEIDFLPQpXsbgAzidB7WINpw1JGe7CgbeP2E/?a=3006&bti=cHJ3bzFmc3dmZEBvY15taF4rcm1gYA%3D%3D&ch=0&cr=0&dr=0&lr=all&cd=0%7C0%7C0%7C0&cv=1&br=3860&bt=1930&cs=0&ds=3&ft=GNvlXInz7ThIop.KXq8Zmo&mime_type=video_mp4&qs=0&rc=ZGgzOjg4PGhmNjk6Z2g7ZEBpM3d2aW85cms5eDMzOGVkNEAzYl4yL15jNTExLjFfYjMyYSNwY2FyMmQ0aS5gLS1kYi1zcw%3D%3D&vvpl=1&l=20251022200551A73C99DB90D92E11C960&btag=e000b0000" autoplay loop muted playsinline></video>
-                </div>
-                 <!-- Overlay content --><div id="overlay-content" class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-start pt-24 z-10">
-                    <img src='https://i.postimg.cc/QVG4XD6j/8f06121e1c15be8566b3fc02982a2027.png' border='0' alt='Gift Image' class="w-48 h-48 object-contain rounded-lg shadow-lg mb-6"/>
-                    <button id="get-button" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-12 rounded-full text-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">
-                        Get
-                    </button>
-                </div>
+            
+            <main class="flex-grow flex flex-col pt-16">
+                 <div id="gift-grid-container" class="gift-grid flex-grow overflow-y-auto">
+                    <!-- Gifts will be generated by JS -->
+                 </div>
+                 <footer class="gift-footer p-4 flex items-center justify-between">
+                    <div id="gift-box-container" class="flex items-center space-x-3">
+                        <i class="fas fa-box-open text-3xl text-gray-400"></i>
+                        <p id="total-amount" class="text-2xl font-bold">0</p>
+                    </div>
+                    <button id="get-btn" class="get-btn text-white font-bold py-3 px-10 rounded-lg">Get</button>
+                </footer>
             </main>
+
+            <!-- Success Toast -->
+            <div id="success-toast">
+                <div class="checkmark"></div>
+                <span>Successfully</span>
+            </div>
         </div>
 
     </div>
@@ -221,8 +352,6 @@
         const giftPage = document.getElementById('gift-page');
         const giftTrigger = document.getElementById('gift-trigger');
         const backButton = document.getElementById('back-button');
-        const getButton = document.getElementById('get-button');
-        const overlayContent = document.getElementById('overlay-content');
 
         giftTrigger.addEventListener('click', () => {
             inboxPage.classList.add('hidden');
@@ -232,16 +361,166 @@
         backButton.addEventListener('click', () => {
             giftPage.classList.add('hidden');
             inboxPage.classList.remove('hidden');
-            // Reset the animation class so it can play again
-            setTimeout(() => {
-                overlayContent.classList.remove('fly-away');
-            }, 500); // Duration should match the transition in CSS
         });
 
-        getButton.addEventListener('click', () => {
-            overlayContent.classList.add('fly-away');
+        document.addEventListener('DOMContentLoaded', () => {
+            const giftGridContainer = document.getElementById('gift-grid-container');
+            if (!giftGridContainer) return;
+
+            const totalAmountEl = document.getElementById('total-amount');
+            const getBtn = document.getElementById('get-btn');
+            const giftBoxContainer = document.getElementById('gift-box-container');
+            const successToast = document.getElementById('success-toast');
+
+
+            const giftsData = [
+                { id: 1, name: 'TikTok Universe', img: 'https://i.postimg.cc/NjHbRgWL/8f471afbcebfda3841a6cc515e381f58-tplv-obj.webp', quantity: 0 },
+                { id: 2, name: 'Lion', img: 'https://i.postimg.cc/ryhKChN6/4fb89af2082a290b37d704fe729-tplv-obj.webp', quantity: 1 }, // Start with 1 as in image
+                { id: 3, name: 'Sports Car', img: 'https://i.postimg.cc/W10NKSgL/ece188da898772f18aaffe49a7bd7db-tplv-obj.webp', quantity: 0 },
+                { id: 4, name: 'Leon and Lion', img: 'https://i.postimg.cc/6qckpsL6/a291aedacf27d22c3fd2d83575d2bee9-tplv-obj.webp', quantity: 0 },
+                { id: 5, name: 'Leon the Kitten', img: 'https://i.postimg.cc/Kz1v9bNS/a7748baba012c9e2d98a30dce7cc5a27-tplv-obj.webp', quantity: 0 },
+                { id: 6, name: 'King of Legends', img: 'https://i.postimg.cc/Tw8X4KmW/3790b60a52697daa138bf8d0ec27242f-png-tplv-obj.webp', quantity: 0 },
+                { id: 7, name: 'Fire Phoenix', img: 'https://i.postimg.cc/RVhTSXz8/bfb8425a7e8fa03f9fec05a973a4a506-png-tplv-obj.webp', quantity: 0 },
+                { id: 8, name: 'Gift Box', img: 'https://i.postimg.cc/ZRb60W4K/3646c259f8ce6f79c762ad00ce51dda0-tplv-obj.webp', quantity: 0 },
+                { id: 9, name: 'TikTok Shuttle', img: 'https://i.postimg.cc/BbMk4b8C/8ef48feba8dd293a75ae9d4376fb17c9-tplv-obj.webp', quantity: 0 }
+            ];
+
+            function renderGifts() {
+                giftGridContainer.innerHTML = '';
+                giftsData.forEach(gift => {
+                    const item = document.createElement('div');
+                    item.className = 'gift-item';
+                    item.dataset.id = gift.id;
+
+                    let actionHtml;
+                    if (gift.quantity > 0) {
+                        actionHtml = `
+                            <div class="quantity-selector">
+                                <button class="quantity-btn minus">-</button>
+                                <span class="quantity-display">${gift.quantity}</span>
+                                <button class="quantity-btn plus">+</button>
+                            </div>
+                        `;
+                    } else {
+                        actionHtml = `<button class="add-btn">Add</button>`;
+                    }
+
+                    item.innerHTML = `
+                        <img src="${gift.img}" alt="${gift.name}">
+                        <p class="gift-name">${gift.name}</p>
+                        ${actionHtml}
+                    `;
+                    giftGridContainer.appendChild(item);
+                });
+                updateTotal();
+            }
+            
+            function updateTotal() {
+                const total = giftsData.reduce((sum, gift) => sum + gift.quantity, 0);
+                totalAmountEl.textContent = total;
+            }
+
+            function animateGiftToBox(startElement) {
+                const flyingGift = startElement.cloneNode(true);
+                const startRect = startElement.getBoundingClientRect();
+                const endRect = giftBoxContainer.getBoundingClientRect();
+
+                flyingGift.classList.add('flying-gift');
+                document.body.appendChild(flyingGift);
+
+                flyingGift.style.left = `${startRect.left}px`;
+                flyingGift.style.top = `${startRect.top}px`;
+                flyingGift.style.width = `${startRect.width}px`;
+                flyingGift.style.height = `${startRect.height}px`;
+
+                requestAnimationFrame(() => {
+                    const endX = endRect.left + (endRect.width / 2) - (startRect.width / 2);
+                    const endY = endRect.top + (endRect.height / 2) - (startRect.height / 2);
+                    flyingGift.style.transform = `translate(${endX - startRect.left}px, ${endY - startRect.top}px) scale(0.1)`;
+                    flyingGift.style.opacity = '0';
+                });
+
+                setTimeout(() => {
+                    flyingGift.remove();
+                    giftBoxContainer.classList.add('box-pulse');
+                    giftBoxContainer.addEventListener('animationend', () => {
+                         giftBoxContainer.classList.remove('box-pulse');
+                    }, { once: true });
+                }, 600);
+            }
+
+            giftGridContainer.addEventListener('click', e => {
+                const target = e.target;
+                const giftItem = target.closest('.gift-item');
+                if (!giftItem) return;
+                
+                const giftImg = giftItem.querySelector('img');
+                const giftId = parseInt(giftItem.dataset.id);
+                const gift = giftsData.find(g => g.id === giftId);
+
+                if (target.classList.contains('add-btn') || target.classList.contains('plus')) {
+                     if(target.classList.contains('add-btn')) gift.quantity = 1;
+                     else gift.quantity++;
+                     animateGiftToBox(giftImg);
+                     renderGifts();
+                } else if (target.classList.contains('minus')) {
+                    gift.quantity--;
+                    if (gift.quantity < 0) gift.quantity = 0;
+                    renderGifts();
+                }
+            });
+            
+            getBtn.addEventListener('click', () => {
+                const totalGifts = giftsData.reduce((sum, gift) => sum + gift.quantity, 0);
+                if (totalGifts === 0) return;
+
+                // Show success toast
+                successToast.classList.add('visible');
+                setTimeout(() => {
+                    successToast.classList.remove('visible');
+                }, 2000);
+
+                // Animate gifts flying out
+                const boxRect = giftBoxContainer.getBoundingClientRect();
+                giftsData.forEach(gift => {
+                    if (gift.quantity > 0) {
+                        for (let i = 0; i < gift.quantity; i++) {
+                            const flyingGift = document.createElement('img');
+                            flyingGift.src = gift.img;
+                            flyingGift.className = 'flying-gift-out';
+                            document.body.appendChild(flyingGift);
+
+                            flyingGift.style.left = `${boxRect.left + (boxRect.width / 2) - 15}px`;
+                            flyingGift.style.top = `${boxRect.top + (boxRect.height / 2) - 15}px`;
+                            
+                            const randomDelay = Math.random() * 0.5;
+                            
+                            requestAnimationFrame(() => {
+                                flyingGift.style.transitionDelay = `${randomDelay}s`;
+                                flyingGift.style.transform = 'translateX(100vw) rotate(360deg)';
+                                flyingGift.style.opacity = '0';
+                            });
+
+                            setTimeout(() => {
+                                flyingGift.remove();
+                            }, 1000 + randomDelay * 1000);
+                        }
+                    }
+                });
+                
+                // Reset quantities
+                setTimeout(() => {
+                    giftsData.forEach(gift => gift.quantity = 0);
+                    renderGifts();
+                }, 200);
+            });
+
+            renderGifts();
         });
     </script>
 </body>
 </html>
+
+
+
 
